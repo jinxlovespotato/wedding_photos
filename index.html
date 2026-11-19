@@ -247,9 +247,6 @@
         // Handle multi-photo upload
         async function handlePhotoUpload(event) {
             event.preventDefault();
-            if (SCRIPT_URL === "https://script.google.com/macros/s/AKfycbwX9wn3Lf1Odzjb1ryC-IKDY6CmRCpsz9ZJ7EKco-7ArNxfOfix156WrYAmO4NvV2okSQ/exec") {
-                alert("Please paste your Google Apps Script Web App URL into SCRIPT_URL first!");
-                return;
             }
 
             const files = document.getElementById("photoInput").files;
