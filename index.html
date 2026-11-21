@@ -49,7 +49,7 @@
             <p class="font-serif italic text-latte text-lg sm:text-xl">Love is Brewing &bull; Capture the Moment</p>
             <h1 class="font-cursive text-5xl sm:text-7xl text-cardbg mt-1">Mary Lyn & Wilmel</h1>
             <p class="text-xs uppercase tracking-widest text-oat/80 mt-2 font-semibold">
-                Upload your favorite snaps from today &mdash; sent straight to the bride &amp; shared on our live wall!
+                Upload your favorite snaps from today &mdash; sent privately straight to the couple!
             </p>
             <button onclick="openQrModal()" class="mt-4 inline-flex items-center gap-2 bg-cardbg/10 hover:bg-cardbg/20 text-latte border border-latte/30 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase transition-all">
                 <i class="fas fa-qrcode leading-none"></i> Show Table QR Code
@@ -64,7 +64,7 @@
         <section class="bg-cardbg rounded-3xl p-6 sm:p-10 border border-roast/20 shadow-lg max-w-2xl mx-auto">
             <div class="text-center mb-6">
                 <span class="text-xs font-bold uppercase tracking-widest text-mocha">Share Your Shots</span>
-                <h2 class="font-serif text-3xl sm:text-4xl font-bold text-espresso mt-1">Add to Our Wedding Album</h2>
+                <h2 class="font-serif text-3xl sm:text-4xl font-bold text-espresso mt-1">Send to Our Wedding Album</h2>
             </div>
 
             <form id="uploadForm" onsubmit="handlePhotoUpload(event)" class="space-y-5">
@@ -115,32 +115,33 @@
             </form>
         </section>
 
-        <!-- Live Guest Photo Wall -->
+        <!-- Private Guest Photo Wall -->
         <section>
             <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 border-b border-roast/20 pb-4 gap-3">
                 <div>
-                    <span class="font-serif italic text-xl text-mocha block">Through Your Lens</span>
-                    <h2 class="font-serif text-3xl sm:text-4xl font-bold text-espresso">Live Ceremony & Reception Wall</h2>
+                    <span class="font-serif italic text-xl text-mocha block">Your Personal Roll</span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-bold text-espresso">Your Uploaded Snaps</h2>
+                    <p class="text-xs text-mocha mt-1"><i class="fas fa-lock mr-1"></i> Only you can see the photos you've taken on this device.</p>
                 </div>
                 <button onclick="loadGallery()" class="self-start sm:self-auto bg-cardbg hover:bg-white text-espresso border border-roast/25 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 shadow-sm transition-all">
-                    <i class="fas fa-sync-alt leading-none" id="refreshIcon"></i> Refresh Wall
+                    <i class="fas fa-sync-alt leading-none" id="refreshIcon"></i> Refresh My Snaps
                 </button>
             </div>
 
             <!-- Loading State -->
             <div id="galleryLoader" class="text-center py-12">
                 <i class="fas fa-mug-hot fa-bounce text-3xl text-mocha mb-2"></i>
-                <p class="font-serif italic text-lg text-roast">Brewing the latest guest photos...</p>
+                <p class="font-serif italic text-lg text-roast">Loading your uploaded photos...</p>
             </div>
 
             <!-- Empty State -->
             <div id="emptyGallery" class="hidden text-center py-14 bg-cardbg/60 rounded-3xl border border-roast/15">
-                <i class="fas fa-images text-4xl text-mocha/50 mb-3"></i>
-                <h3 class="font-serif text-2xl font-bold text-espresso">No Photos Uploaded Yet</h3>
-                <p class="text-sm text-roast mt-1">Be the first guest to snap a memory and share it with Mary Lyn & Wilmel!</p>
+                <i class="fas fa-camera text-4xl text-mocha/50 mb-3"></i>
+                <h3 class="font-serif text-2xl font-bold text-espresso">You Haven't Uploaded Any Snaps Yet</h3>
+                <p class="text-sm text-roast mt-1">Take or select a photo above — your personal uploads will appear right here!</p>
             </div>
 
-            <!-- Photo Masonry / Grid -->
+            <!-- Photo Grid -->
             <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
         </section>
 
@@ -176,10 +177,18 @@
     </div>
 
     <script>
-        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW:
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwX9wn3Lf1Odzjb1ryC-IKDY6CmRCpsz9ZJ7EKco-7ArNxfOfix156WrYAmO4NvV2okSQ/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz1mm4pHyDD2qB-YB745rDnjRxeZMIhM8RqGMzck4NENesLzOd120pHktoksq03oCIPmw/exec";
 
-        // Generate QR code automatically based on the live website URL
+        // Generate or retrieve a unique ID for this specific guest's browser/device
+        function getGuestDeviceId() {
+            let deviceId = localStorage.getItem("mlw_guest_device_id");
+            if (!deviceId) {
+                deviceId = "guest_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10);
+                localStorage.setItem("mlw_guest_device_id", deviceId);
+            }
+            return deviceId;
+        }
+
         function openQrModal() {
             const currentUrl = encodeURIComponent(window.location.href);
             document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=23130E&bgcolor=FFFFFF&data=${currentUrl}`;
@@ -189,7 +198,6 @@
             document.getElementById("qrModal").classList.add("hidden");
         }
 
-        // Preview selected photos before uploading
         function previewSelectedPhotos(event) {
             const files = event.target.files;
             const previewContainer = document.getElementById("previewContainer");
@@ -216,7 +224,6 @@
             }
         }
 
-        // Compress image client-side so large phone photos upload rapidly on mobile data
         function compressImage(file, maxWidth = 1200, quality = 0.78) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -246,14 +253,8 @@
             });
         }
 
-        // Handle multi-photo upload
         async function handlePhotoUpload(event) {
             event.preventDefault();
-
-            if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_APPS_SCRIPT_WEB_APP_URL")) {
-                alert("Please paste your Google Apps Script Web App URL into SCRIPT_URL first!");
-                return;
-            }
 
             const files = document.getElementById("photoInput").files;
             const guestName = document.getElementById("guestName").value.trim();
@@ -263,6 +264,7 @@
             const progressBar = document.getElementById("progressBar");
             const progressText = document.getElementById("progressText");
             const progressPercent = document.getElementById("progressPercent");
+            const deviceId = getGuestDeviceId();
 
             if (!files.length) return;
 
@@ -286,6 +288,7 @@
                             "Content-Type": "text/plain;charset=utf-8"
                         },
                         body: JSON.stringify({
+                            deviceId: deviceId,
                             guestName: guestName,
                             caption: caption,
                             mimeType: "image/jpeg",
@@ -317,22 +320,17 @@
             }
         }
 
-        // Fetch and display all uploaded photos
+        // Fetch ONLY the photos uploaded by this guest's deviceId
         async function loadGallery() {
             const loader = document.getElementById("galleryLoader");
             const emptyState = document.getElementById("emptyGallery");
             const grid = document.getElementById("photoGrid");
             const refreshIcon = document.getElementById("refreshIcon");
-
-            if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_APPS_SCRIPT_WEB_APP_URL")) {
-                loader.classList.add("hidden");
-                emptyState.classList.remove("hidden");
-                return;
-            }
+            const deviceId = getGuestDeviceId();
 
             refreshIcon.classList.add("fa-spin");
             try {
-                const res = await fetch(SCRIPT_URL);
+                const res = await fetch(`${SCRIPT_URL}?deviceId=${encodeURIComponent(deviceId)}`);
                 const data = await res.json();
 
                 loader.classList.add("hidden");
@@ -370,7 +368,6 @@
             document.getElementById("lightbox").classList.add("hidden");
         }
 
-        // Load gallery on page open
         loadGallery();
     </script>
 </body>
